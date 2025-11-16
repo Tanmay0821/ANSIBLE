@@ -1,0 +1,61 @@
+---
+- name: VPC + Public & Private Subnets + IGW + Public RT
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    region: ap-south-1
+    vpc_cidr: 10.0.0.0/16
+    public_subnet_cidr: 10.0.1.0/24
+    private_subnet_cidr: 10.0.2.0/24
+
+  tasks:
+
+    - name: Create VPC
+      amazon.aws.ec2_vpc_net:
+        name: mufasa-vpc
+        cidr_block: "{{ vpc_cidr }}"
+        region: "{{ region }}"
+        dns_support: true
+        dns_hostnames: true
+        state: present
+      register: vpc
+
+    - name: Create Public Subnet
+      amazon.aws.ec2_vpc_subnet:
+        region: "{{ region }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+        cidr: "{{ public_subnet_cidr }}"
+        az: "ap-south-1a"
+        map_public: true
+        state: present
+      register: public_subnet
+
+    - name: Create Private Subnet
+      amazon.aws.ec2_vpc_subnet:
+        region: "{{ region }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+        cidr: "{{ private_subnet_cidr }}"
+        az: "ap-south-1b"
+        map_public: false
+        state: present
+      register: private_subnet
+
+    - name: Create Internet Gateway
+      amazon.aws.ec2_vpc_igw:
+        region: "{{ region }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: present
+      register: igw
+
+    - name: Create Route Table for Public Subnet
+      amazon.aws.ec2_vpc_route_table:
+        region: "{{ region }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+        subnets:
+          - "{{ public_subnet.subnet.id }}"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+      register: public_rt
