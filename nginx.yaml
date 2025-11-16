@@ -1,0 +1,31 @@
+---
+- name: Install Git and Nginx on Linux
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Git
+      package:
+        name: git
+        state: present
+
+    - name: Install Nginx
+      package:
+        name: nginx
+        state: present
+
+    - name: Clone repo
+      git:
+        repo: "https://github.com/Tanmay0821/tanmay12.git"
+        dest:  /opt/mycode
+        version: main
+
+    - name: Copy HTML file
+      copy:
+        src: /opt/mycode/abc.html
+        dest: /usr/share/nginx/html/index.html
+        remote_src: yes
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
