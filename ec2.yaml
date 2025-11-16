@@ -1,0 +1,15 @@
+---
+- name: creating ec2
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: start an instance with a public IP address
+      amazon.aws.ec2_instance:
+        region: ap-south-1
+        name: public-tanmay-instance
+        vpc_subnet_id: subnet-0c6dd11ab5fbd1542
+        instance_type: t2.nano
+        security_group: default
+        network_interfaces:
+          - assign_public_ip: true
+        image_id: ami-03695d52f0d883f65
